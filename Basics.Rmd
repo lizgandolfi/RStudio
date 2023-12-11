@@ -1,0 +1,93 @@
+---
+title: "RStudio Basics"
+
+output: pdf_document
+header-includes:
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy}
+  - \fancypagestyle{plain}{\pagestyle{fancy}}
+  - \fancyhead[L]{}
+  - \fancyhead[C]{This material should not be shared beyond those who are enrolled in this class}
+
+---
+
+## Question 1
+
+Load the ```countries2``` data set and get the names of all of the variables included in it. Based just on what you can tell from the variable names, what sorts of variables are in this data set? Identify one variable that looks like it might represent something interesting to study (a potential dependent variable), and then identify another variable that you think might be related to the first variable you chose.
+
+```{r}
+#load data
+load("data/countries2.rda")
+
+#get names of the variables
+names(countries2)
+```
+
+This data set contains aggregate variables and data about the economy and regarding population indexes.Some of the variables are numerical, while others are categorical.
+
+One potential dependent variable to study could be "kid_mort", or infant's mortality.
+
+```{r}
+summary(countries2$kid_mort)
+```
+
+We could study infant's mortality as related to the independent variable "health_exp", or expenditures for health-related costs.
+
+```{r}
+summary(countries2$health_exp)
+```
+
+## Question 2
+
+Use the ```dim``` function to tell how many variables and how many countries are in the data set.
+
+```{r}
+#View(countries2)
+dim(countries2)
+```
+
+The numbers reflect the rows and columns. Therefore the data set 'countries2' contains 195 countries and 49 variables.
+
+## Question 3
+
+Use the ```Approve21``` data set and create a new object, ```Approve21$net_approve```, which is calculated as the percent in the state who approve of the Biden’s performance MINUS the percent in the state who disapprove of Biden’s performance. Sort the data set by ```Approve21$net_approve``` and list the six highest and lowest states. Say a few words about the types of states in these two lists.
+
+```{r}
+library(readxl)
+Approve21 <- read_excel("data/Approve21.xlsx") 
+#View(Approve21)
+
+#calculate proportion of approval
+Approve21$net_approve<-(Approve21$Approve)-(Approve21$Disapprove)
+
+#Sort the data set by ```Approve21$net_approve``` and list the six highest and lowest states.
+Approve21<-Approve21[order(Approve21$net_approve),]
+
+#six highest
+head(Approve21)
+```
+
+The six highest states are known to be very conservative, and they are primarily southern states. In this region, people are known to prefer Republican candidates over time.
+
+```{r}
+#six lowest
+tail(Approve21)
+```
+
+The six lowest states are primarily coast states and northern states, which are known to overwhelmingly vote liberal and will have potentially favored President Biden during the elections.
+
+## Question 4
+
+Produce a histogram of ```Approve21$net_approve``` and describe what you see. Be sure to provide substantively meaningful labels for the histogram.
+
+```{r}
+#create histogram
+hist(Approve21$net_approve)
+#create labels
+hist(Approve21$net_approve,
+     main="Percentage Difference in Biden's Approval, by State", #Graph title 
+     ylab="Number of States", #vertical axis label
+     xlab="% Approval") #Horizontal axis label
+```
+
+The histogram highlights two distinct sets of states. These either have a 10% to 20% of people that support President Biden, or they have a 10% to 20% of people who disapprove of him. This means that there are some states, those with a negative percentage difference, who will lean toward having a majority of Republican voters, while those with a positive percentage difference will have a majority of Democrat voters. This histogram denotes the political polarization that American politics is currently living in. People either moderately approve or disapprove of a candidate, but no political candidate captures an overwhelming amount of support across the board.
