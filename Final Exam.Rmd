@@ -1,0 +1,301 @@
+---
+title: "POSC 3202 Final Exam"
+author: "Lisa Gandolfi"
+date: "`r Sys.Date()`"
+output: pdf_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(error=FALSE,comment='')
+```
+# Part I: Key Concepts
+
+The following questions ask you to explain several key concepts. Your responses should be several sentences in length - be specific! Your task is to show me how well you understand the material.
+
+## Question 1
+
+Briefly explain the fundamental problem of causal inference. In what scenarios can we interpret causal effects?  
+
+## Answer 1
+
+The fundamental problem of causal inference is what we call "parallel trends," and is often an assumption that must be upheld during observational or experimental studies. The parallel trends problem refers to the fact that the treatment and the control groups would have followed parallel trends over time, had they not been administered any treatment. In other words, any variations in outcomes between the treatment and control groups prior to the application of the treatment are attributed to pre-existing variances or trends that would have persisted in the absence of the treatment. The parallel trends assumption is critical for the validity of causal inference. If the treatment and control groups do not display parallel trends before the treatment is administered, it is difficult to distinguish the treatment's causal effect. If the trends across the groups differ in a systematic way, it becomes difficult to separate the impact of the treatment from the pre-existing differences.
+
+
+## Question 2
+
+What is the meaning of statistical significance? Explain it to me like I am your boss who somehow got the position without ever taking a single quantitative data analysis class. 
+
+## Answer 2
+
+When performing statistical analysis, statistical significance is what allows us to determine whether our results are accurate, and therefore we have uncovered a significant existing relationship between two factors, or that our results might have just been influenced by random variation in our data. To put it in other terms, statistical significance is what tells us if we should use our data, and we have found something relevant, or if we should discard our results and try again. By trying again, we could perhaps find more reliable data, change the functional form of our equation, or add more variables. It does not necessarily mean that we should disregard our research question and move on to another one. On the other hand, if we perform a regression and all of our results are statistically significant, that is a good indicator that our initial ideas were correct and that we uncovered a true relationship between our variables.
+
+
+# Part II: Applied
+
+The second portion of the exam is applied. Include all code chunks in your pdf. I have installed all the packages you need and also gave you a head start with the code to load the data. Make sure you answer all parts of the question.  
+
+## Question 1
+
+In the United States, political fundraising is crucial to
+the success and eventual election of politicians. Female politicians, 
+however, report more fundraising difficulties than their 
+male counterparts. Female politicians are also underrepresented in 
+state legislatures across the country. This exercise is in part based on:
+ Barber, Michael, Daniel Butler, and Jessica Preece. 2016. "[Gender Inequalities in Campaign
+ Finance.](http://dx.doi.org/10.1561/100.00015126)" *Quarterly Journal 
+ of Political Science* 11(2): 219-248.
+ 
+In this paper, the authors attempt to estimate whether female state 
+legislative incumbents have more trouble fundraising than do male 
+legislative incumbents. Observations consists of information on all U.S. state legislative races in which a male and female candidate ran 
+against each other.
+
+The data file you will use is `BBP2016_Data.csv`, a CSV data file. 
+The file contains the following variables, a few of which we will make use of in this exercise, as well as other variables that the authors made 
+use of in their paper:
+
+--------------------------------------------------------------------------------
+ Name                     Description
+ -----------------------  ------------------------------------------------------
+ `bonica.rid`             Candidate ID number
+
+ `cycle`                  Year in which the election was held
+
+ `name`                   Legislator's name
+ 
+ `cand.gender`            Legislator's gender
+
+ `Party`                  Party affiliation (Democrat = 100, Republican = 200)
+
+ `seat`                   Whether the legislator ran for upper or lower house
+
+ `running.variable`       Male candidate vote share minus female candidate vote share in previous election
+
+ `total.raised.candidate` Total funding raised by legislator after winning election
+
+ `male.money`             Total raised from male donors
+
+ `female.money`           Total raised from female donors
+ 
+ `share.district.total`   Proportion of total district funding raised by the incumbent
+ -------------------------------------------------------------------------------
+
+```{r, include=FALSE}
+#note: include = FALSE just suppresses all the output that comes with loading packages. I don't need 5 pages of that! Leave it as is!
+library(DescTools)
+library(dplyr)
+library(descr)
+library(effectsize)
+library(gplots)
+library(Hmisc)
+library(lmtest)
+library(ppcor)
+library(sandwich)
+library(stargazer)
+library(foreign)
+BBP <- read.csv("data/BBP2016_Data.csv")
+```
+
+**1a.** Use R to report all measures of central tendency that are appropriate for each of the following variables: The total amount of money raised by male donors (```male.money```), the amount of money raised by female donors (```female.money```), and the proportion of total district funding raised by the incumbent (```share.district.total```). Where appropriate, also discuss
+skewness. 
+
+Male.money
+```{r}
+#median
+median(BBP$male.money, na.rm=TRUE)
+
+#mean
+mean(BBP$male.money, na.rm=TRUE)
+
+#skewness
+Skew(BBP$male.money, na.rm=TRUE)
+```
+The median amount of funding raised by male donors is 8,405 dollars, the mean is 22,185.88 dollars and the skewness statistic is 7.05. Since it is greater than 2, this means that our data is highly positively skewed. 
+
+Female.money
+```{r}
+#median
+median1 <- median(BBP$female.money, na.rm=TRUE)
+median1
+
+#mean
+mean1 <- mean(BBP$female.money, na.rm=TRUE)
+mean1
+
+#skewness
+Skew(BBP$female.money, na.rm=TRUE)
+```
+The median amount of funding raised by female donors is 2,732.5 dollars, the mean is 7,101.467 dollars and the skewness statistic is 7.56. Since this is also greater than 2, this means that our data is highly positively skewed. 
+
+Share.District.Total
+```{r}
+#median
+median(BBP$share.district.total, na.rm=TRUE)
+
+#mean
+mean(BBP$share.district.total, na.rm=TRUE)
+
+#skewness
+Skew(BBP$share.district.total, na.rm=TRUE)
+```
+The proportion of district funding raised by the incumbent's median is 0.8805359, meaning that according to the median, the incumbents raised 88% of the total funding for the district, the mean is 0.8028296 dollars, meaning that the average proportion of funding raised by the incumbent in a district is 80%, and the skewness statistic is -0.817068. Since this is smaller than 2, we can determine that this variable is not highly skewed.
+
+**1b.** Using one of the numeric variables listed in the previous question, create a density plot that includes vertical lines showing the mean and median outcomes, and add a legend. Describe what you see in the plot.
+
+```{r}
+plot(density(BBP$female.money, na.rm=TRUE),
+xlab="Total Raised from Female Donors",
+main="")
+abline(v=mean1, na.rm=TRUE,
+abline(v=median1, na.rm=TRUE), lty=2)
+legend("topright", legend=c("Median", "Mean"), lty=1:2)
+```
+The plot for total amount of money raised by female donors shows that the results are highly positively skewed. The mean and the median, albeit quite different in magnitudes (as explained earlier) appear to be quite close in the graph since there seems to be a small number of very cumbersome donations for females that skew the results. However, as showed by the median, the majority of the values lies around the zero to 10,000 mark (inferred by the graph), therefore resulting in a positively skewed skewness statistic.
+
+**1c.** Compare the party composition of female candidates and of male candidates. What proportion of Democratic candidates are male? Female? What proportion of Republican candidates are male? Female? Comment on the results. 
+
+```{r}
+crosstab(BBP$Party, BBP$cand.gender, prop.c=T, plot=F)
+```
+Democrat=100, Republican =200 What proportion of Democratic candidates are male? Female? What proportion of Republican candidates are male? Female? Comment on the results. 
+
+Based on the table's results, we can see that there are significant differences in the gender distribution across the two parties. Out of the total candidates for the Democratic party, 66.2% are females, while 37.1% are males. Within the Republican party, 33.7% of the candidates are female and 62.8% are males. These results show that females make up the majority of candidates within the Democratic party, while males make up the majority for the Republican party. Considering the entire sample population (2930), the proportion of Democratic party female candidates is 32.59%, while the proportion of Democratic party male candidates over the total amount of candidates is 18.12%. For the Republican party, female candidates represent 16.58%, and male candidates represent 30.71% of the total amount of candidates. This shows that the Democratic party is more highly female-candidates dominant, while the Republican party is more male-canddates dominant, and that overall, the proportion of Democratic candidates is higher than the proportion of Republican candidates.
+
+## Question 2
+
+Recently, many scholars have been interested in quantifying the effect
+of the national news media on the behavior of electorate.
+Understanding how the national media environment affects the election
+results is critically important, but also notoriously difficult. In
+particular, even if an association between media coverage and election
+outcomes exists, it is difficult to identify whether this association
+is due to the media's influence over the voters or the result of the
+media adjusting its contents to the preferences of voters.
+
+In this exercise, we will consider the entry of the Fox News Channel
+(hereafter Fox News) into the television market in the late
+1990s. This exercise is based on the following study: Stefano
+  DellaVigna and Ethan Kaplan (2007). ["The Fox News Effect: Media
+  Bias and Voting."](https://doi.org/10.1162/qjec.122.3.1187) *Quarterly Journal of Economics*,
+  122:3, pp.1187-1234.  
+  
+Note that due to the nature of
+negotiations between cable companies and television networks, adding a
+new channel to the line-up of a cable company may take a long time.
+For this reason, in contrast to what many people might expect, Fox
+News was not able to enter conservative media markets first.  We will
+be looking at some of the differences between the towns that initially
+did not receive Fox News, and those that did.  The data set is in the
+csv file `foxnews.csv`. It contains information for 10,126 towns
+across 28 states in the United States:
+
+--------------------------------------------------------------------------------
+ Name                 Description
+ -------------------- ---------------------------------------------------------
+ `town`               Town name
+ 
+ `state`              State in which the town is located
+ 
+ `subrf2000`          Share of Fox News subscribers in 2000
+ 
+ `gopvoteshare2000`   Two-party vote share for the Republicans (2000 Presidential 
+                      election)
+ 
+ `gopvoteshare1996`   Two-party vote share for the Republicans (1996 Presidential 
+                      election)
+ 
+ `gopvoteshare1992`   Two-party vote share for the Republicans (1992 Presidential 
+                      election)
+ 
+ `college1990`        Proportion of population with a college degree in 1990 
+ 
+ `male1990`           Proportion of male population in 1990
+ 
+ `black1990`          Proportion of black population in 1990
+ 
+ `hisp1990`           Proportion of hispanic population in 1990
+ 
+ `income1990`         Median income in 1990
+ 
+ `logincome1990`      Median income in 1990 on the logarithmic scale 
+--------------------------------------------------------------------------------
+
+```{r}
+foxnews <- read.csv("data/foxnews.csv", stringsAsFactors = TRUE)
+```
+
+**2a.** We begin by examining the relationship between the exposure to Fox News in 2000 and the change in the GOP’s vote share from the 1996 to the 2000 Presidential election. First, create a new variable called ```foxnews2000``` that takes the value of 1 if the share of Fox News subscribers in a given town is strictly larger than 0 and equals 0 otherwise. Then, create a new variable called ```rep.share.diff``` that measures the difference between the Republican vote share in 2000 and in 1996. 
+
+```{r}
+#foxnews2000
+foxnews$foxnews2000 <-as.numeric(foxnews$subrf2000>0)
+
+#rep.share.diff
+foxnews$rep.share.diff <- foxnews$gopvoteshare2000 - foxnews$gopvoteshare1996
+```
+
+**2b.** State a null and alternative hypothesis for this pair of variables.
+
+Ho: foxnews2000 = rep.share.diff
+Ha: foxnews2000 =/ rep.share.diff
+
+For these variables, our null hypothesis would entail that foxnews2000 and rep.share.diff are not related to one another, while our alternative hypothesis entails that foxnes2000 and rep.share.diff are related in some capacity.
+
+**2c.** Use the ```compmeans``` command to estimate the change in vote share from the 1996 to the 2000 Presidential election in towns with exposure to Fox News and in towns without exposure to Fox News. Describe the results. What do the data and boxplot tell you? What limitations do you face when making inferences based on your analysis at this point? 
+
+```{r}
+compmeans(foxnews$rep.share.diff, foxnews$foxnews2000, plot=T)
+```
+The data shows that towns that had exposure to Fox News (foxnews2000=1) had an average difference in the two party share of the Republican vote for the 1996 election as opposed to the 2000 election equal to 0.05826190, or 5.83%. For towns that did not have exposure to Fox News (foxnews2000=0) the difference was actually higher, equaling 0.07124573 or 7.12%. On average, the difference between the share of Republican party votes from 1996 to 2000 changed by 0.06881996, or 6.88%. The boxplot highlights the same results, however, it also shows that there are quite a few outliers in the sample that might have skewed and influenced the average results. In addition, at this point, we should take into account that correlation does not imply causation. This means that while our results seem to have been influencing, and to be related to one another, we cannot pinpoint with certainty whether or not they were the sole reason why the share of the votes changed from 1996 to 2000. Our analysis has not included necessary ad important variables that we should control for if we wanted to create a reliable and statistically significant model.
+
+**2d.** Conduct a t-test for the difference in GOP vote share between towns with exposure to Fox News and towns with No Fox News. Interpret the results. 
+
+```{r}
+t.test(foxnews$rep.share.diff~foxnews$foxnews2000)
+```
+According to the t-test, the t-statistic is 9.4825, with 2840.5 degrees of freedom and a p-value of 2.2e-16. This means that since the p-value is so close to zero, we can reject the null and conclude that there is a difference in GOP vote share between towns with exposure to Fox News and towns with no exposure to Fox News. According to the 95% confidence interval, the gap between GOP vote share in towns with Fox News exposure and towns that did not have it lies between 0.01029902 and 0.01566864 points. These results are also reinforced by the means, which equal the ones calculated previously. 
+
+**2e.** Add a means plot (```plotmeans``` command) and Cohen’s D (```cohens_d``` command) and discuss what additional insights they provide. 
+
+```{r}
+#Mean outcomes of GOP vote share by Fox News exposure
+plotmeans(foxnews$rep.share.diff~foxnews$foxnews2000,
+n.label=T,
+ylab="Mean GOP Vote Share Difference between 1996 and 2000",
+xlab="Exposure to Fox News Channel")
+
+#Cohens' D
+cohens_d(foxnews$rep.share.diff~foxnews$foxnews2000)
+```
+
+After graphing the difference in GOP vote share difference between 1996 and 2000 based on cities with exposure to Fox News in 2000 and cities that did not have exposure, we can conclude that there seems to be a relevant difference between the two groups' means. These results are confirmed by our previous analysis as well. We can also gather that the 95% confidence interval for cities with exposure to Fox News appears to be bigger than that of cities that did not have any exposure. However, the scale and sizes of the y axis can be misleading, as it only spans around 0.060 to 0.070. The problem with this is that graphing the results base don this axis might cause to overestimate the true difference between the values. By using a more scaled axis, the true difference between the two means would showcase a lower perceived magnitude.
+
+This is confirmed by the Cohens'D results. In this instance, Cohens' D = 0.24, which means that it is fair to assume that the impact of Fox News availability in a town has a very small impact on the difference in GOP vote share between 1996 and 2000.
+
+**2f.** Compute the correlation between the difference in Republican share of the 2-party vote from 1996 to 2000 (```rep.share.diff```) and the share of Fox News subscribers in 2000 (```subrf2000```). Provide an interpretation of the result.
+
+```{r}
+corr<-lm(foxnews$rep.share.diff ~ foxnews$subrf2000)
+summary(corr)
+```
+The regression results show that a one-unit increase in the share of Fox News subscribers in 2000 led to a .0373526 decrease, or 3.73% decrease, in the Republican share of the 2-party vote from 1996 to 2000. This result is statistically significant at the 0% level, but also at the 5% significance level, which is worth mentioning because it's the standard for social sciences. In addition, the adjusted R-squared is 0.01128, which means that 1.13% of the variations in our dependent, GOP vote share, can be explained by our independent variable, the share of Fox News subscribers in 2000. This suggests that taking only this independent variable into account does not paint a complete picture of the effects that might have led to an increase in the Republican vote share between 1996 and 2000.
+
+## Question 3
+
+Question 3 will continue to analyze the relationship between Fox News exposure and GOP vote share. Using the foxnews data set, run a multiple regression model with the GOP share of the 2 party vote in 2000 (```gopvoteshare2000```) as the dependent variable and share of Fox News subscribers in 2000 (```subrf2000```), the proportion of people with a college degree (```college1990```), the proportion of the population that is male (```male1990```), the median income (```income1990```), and the 1996 GOP share of the 2 party vote (```gopvoteshare1996```) as the independent variables. 
+
+**3a.** Produce a publication-ready table using ```stargazer```. Summarize the results of this model. Make sure to address matters related to the slopes of the independent variables and how well the group of variables does in accounting for Republican vote share in the 2000 election.
+
+```{r}
+corr2<-lm(foxnews$gopvoteshare2000~foxnews$subrf2000 + foxnews$college1990 + foxnews$male1990 + foxnews$income1990 + foxnews$gopvoteshare1996,na.action=na.exclude)
+stargazer(corr2, type="text",
+dep.var.labels=c("GOP Share of the 2 Party Vote in 2000"),
+covariate.labels = c("share of Fox News subscribers in 2000",
+"Proportion of People with a College Degree","Proportion of the Population that is Male","Median Income","1996 GOP Share of the 2 Party Vote"))
+```
+From this regression we can gather that the only two variables that positively affect the GOP Share of the 2 Party Vote in 2000 are the proportion of the population that is male and the 1996 GOP share of the 2 party vote. In particular, we can observe that the coefficient for the proportion of the population that is male is 0.225. This means that as the proportion of the population that is male increases by one percentage point, the GOP share of the two party vote in 2000 will increase by 0.225 units. As the table suggests, this result is also statistically significant at the 1% significance level, and it has a standard deviation of 0.017. The coefficient for the 1996 GOP share of the 2 party vote is 0.962. This means that as the 1996 GOP share of the two party vote increases by one percentage point, its 2000 respective increases by 0.962 units. This result is also statistically significant at the 1% significance level, and it has a standard deviation of 0.004.
+
+Regarding the other coefficients, they all seem to impact the GOP share of the two-party vote in 2000 negatively. The coefficient for the share of Fox News subscribers in 2000 is -0.016, it is statistically significant at the 1% level, and it has a standard deviation of 0.003. This means that a one percentage point increase in the share of Fox News subscribers in 2000 decreases the GOP Share of the 2 Party Vote for the same year by 0.016 units. The coefficient for the proportion of people with a college degree is -0.146, it is statistically significant at the 1% level, and it has a standard deviation of 0.006. This means that a one percentage point increase in proportion of people with a college degree decreases the GOP Share of the 2 Party Vote for the same year by 0.146 units. The coefficient for the median income is -0.008, it is statistically significant at the 1% level, and it has a standard deviation of 0.001. This means that a one percentage point increase in the median income decreases the GOP Share of the 2 Party Vote for the same year by 0.008 units. Lastly, the constant's coefficient is 0.024, with a 1% level statistical significance and a standard deviation of 0.008. This means that if we did not take into account our variables, the GOP share of the two-party vote would equal 0.024. 
+
+In this instance, the R-squared and adjusted R-squared are the same: 0.866. This means that our independent variables explain 86.6% of the variations in our independent variable. This is a good indicator that our model has a good functional form and a good fit, and therefore precisely explains and estimates the GOP Share of the 2 Party Vote in 2000. 

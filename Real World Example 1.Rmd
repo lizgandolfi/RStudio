@@ -1,0 +1,85 @@
+---
+title: "Real World Example 1"
+author: "Lisa Gandolfi"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Instructions
+In the wake of the _Dobbs v. Jackson_ Supreme Court decision, which overturned the longstanding precedent from _Roe v. Wade_, it is interesting to consider who is most likely to be upset by the Court's decision. You should examine how three independent variables influence ```anes20$upset_court```, a slightly transformed version of ```anes20$V201340```. This variable measures responses to a question that asked respondents if they would be pleased or upset if the Supreme Court reduced abortion rights. The three independent variables you should use are ```anes20$V201600``` (sex of respondent), ```anes20$ptyID3```(party identification), and ```anes20$age5``` (age of the respondent). 
+
+```{r}
+load("data/anes20.rda")
+library(Hmisc)
+library(descr)
+library(dplyr)
+library(DescTools)
+
+#create anes20$upset_court
+anes20$upset_court<- anes20$V201340
+levels(anes20$upset_court) <- c("Pleased","Upset","Neither")
+anes20$upset_court <- ordered(anes20$upset_court, levels=c("Upset","Neither","Pleased"))
+
+#Collapse age into fewer categories
+anes20$age5 <- cut2(anes20$V201507x,c(30,45,61,76))
+#Assign label to levels
+levels(anes20$age5) <- c("18-29","30-44","45-60","61-75"," 76+")
+```
+
+## 1
+
+Create three crosstabs using the dependent and independent variables described above. 
+
+```{r}
+#dep: court sentiment, indep: gender
+crosstab(anes20$upset_court, anes20$V201600, prop.c=T, plot = F)
+```
+The relationship between ```anes20$upset_court``` and ```anes20$V201600``` tells us that women are significantly more opinionated regarding abortion laws and Supreme Court decisions (54.2%) than men (45.8%). In particular, while both genders showed to be majorly "upset" by the court ruling (43.2% for men and 53.1% for women), the percentage of women who was upset by the decision was ~10 percentage points larger than the male population. In addition, a large percentage of men (32.8%) did not have an opinion on the matter, while 24% was pleased by the ruling. The percentage of women who were indifferent or pleased were significantly lower, respectively 26.3% and 20.6%. This is significant with the fact that women are more closely affected by abortion laws, since they are the population that is directly subject to the laws. Men, on the other hand, while still being displeased by the decisions, do not show to have such a stronger opinion.
+
+```{r}
+#dep: court sentiment, indep: party identification
+crosstab(anes20$upset_court, anes20$ptyID3, prop.c=T, plot = F)
+```
+The relationship between ```anes20$upset_court``` and ```anes20$ptyID3``` tells us that the three parties significantly vary in their views of abortion laws. A large majority of Democrats was strongly upset by the imposition of anti-abortion laws (73.6%), while only a very small percentage of Democrats supported the new anti-abortion laws (5.2%). The relationship between party and sentiment is diametrically opposed for Republicans. Only 22.4% of Republicans was upset by anti-abortion laws, while a greater number, 43.3%, although not as polarizing as the percentages among the Democrat party, was pleased by the court ruling. Independents were in between the two, with 41.9% of members being upset by the decisions, while 14.1% were pleased. Interestingly, 44% of Independents were indifferent to the decision, against 21.2% Democrats and 34.2% Republicans. 
+This results show that Democrats and Republicans are parties most polarized and opinionated on the issue. Independents are the party that is most indifferent. There is a stark contrast between 43.3% of Republicans suppirting anti-abortion laws and 73.6% of Democrats against them. This is due to the memberships that these parties attract. Democrats tend to be younger, more educated, and from different religious and social backgrounds, while also being more liberal. Republicans are usually older and more male-dominant, while also adhering to religions that are strictly against abortion.
+
+```{r}
+#dep: court sentiment, indep: age
+crosstab(anes20$upset_court, anes20$age5, prop.c=T, plot = F)
+```
+The relationship between ```anes20$upset_court``` and ```anes20$age5``` tells us that the sentiment towards and against abortion laws is significantly tied to age, and that younger generations are more prone to support abortion rights, while older populations tend to support anti-abortion laws. Populations between 18-29 are the strongest supporters of abortion rights, likely because this is also the primary reproductive age, therefore the people who will be the most affected by anti-abortion laws. On the other hand, as age increases, the support for anti-abortion laws increases. As a result, populations with 76+ years are the strongest supporters of the overturn of Roe v. Wade, but also arguably the least affected firsthand by the issue.
+
+## 2
+
+Decide which measures of association are most appropriate for summarizing the relationship in each of the tables, run the commands for those measures of association, and discuss the results.
+
+```{r}
+#V for dep: court sentiment, indep: gender
+CramerV(anes20$upset_court, anes20$V201600)
+#Lambda
+Lambda(anes20$upset_court, anes20$V201600, direction="row", conf.level = .95)
+```
+To test this relationship, I decided to use Cramer's V and Lambda because both of our variables are nominal, but only ```anes20$upset_court``` is an ordinal variable, while gender isn't. The results from Cramer's V suggest that there is not a strong relationship between court sentiment to the Dobbs v. Jackson case and the gender of the surveyed population. I also calculated lambda, but the result of 0 suggests that even if there might be a clear relationship between gender and sentiment, gender might still not help explain the variation in the abortion sentiment (our dependent). 
+
+```{r}
+#V for dep: court sentiment, indep: party identification
+CramerV(anes20$upset_court, anes20$ptyID3)
+#Lambda
+Lambda(anes20$upset_court, anes20$ptyID3, direction="row", conf.level = .95)
+```
+To test this relationship, I also decided to use Cramer's V and Lambda because both of our variables are nominal, but only ```anes20$upset_court``` is an ordinal variable, while party identification isn't. The results from Cramer's V suggest that there is no relationship between court sentiment to the Dobbs v. Jackson case and party identification, although the relationship is stronger than that between gender and abortion sentiment. I also calculated Lambda, and although the result is bigger than the previous estimation, only 17.4% of the variation of court sentiment can be explained by party identification.
+
+```{r}
+#V for dep: court sentiment, indep: age
+CramerV(anes20$upset_court, anes20$age5)
+#Lambda
+Lambda(anes20$upset_court, anes20$age5, direction="row", conf.level = .95)
+#Tau-C
+StuartTauC(anes20$upset_court, anes20$age5, conf.level=0.95)
+```
+To test this relationship, I decided to use Cramer's V, Lambda and Tau-C because both our variables are ordinal, and the table resulting from their relationship (as calculated in exercise 1) is a rectangle, thus directing us toward using Tau-C. The results from Cramer's V suggest that there is virtually no relationship between court sentiment to the Dobbs v. Jackson case and age, and the result is the lowest one among the ones computed in exercise 2. Regarding Lambda, the result of 0 suggests that even if there might be a clear relationship between age and sentiment, age might still not help explain the variation in the Dobbs v. Jackson (our dependent). Finally, Tau-C confirms the previous results by showing that the relationship between the two variables is quite weak.
+
+

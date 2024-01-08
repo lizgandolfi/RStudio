@@ -1,0 +1,128 @@
+---
+title: "Election Fraud in Russia"
+author: "NAMES"
+output:
+  pdf_document: default
+  html_document: default
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \fancyhead[L]{}
+- \fancyhead[C]{This material should not be shared beyond those who are enrolled in
+  this class}
+---
+
+![Protesters in the Aftermath of the 2011 State Duma Election.](pics/russia-fraud.jpg)
+
+The poster says, 'We don't believe Churov! We believe Gauss!'  Churov is the head of the State Electoral Commissions and Gauss refers to a 18th century German mathematician, Carl Friedrich Gauss, whom the Gaussian (Normal) distribution was named after. Source: [http://darussophile.com/2011/12/measuring-churovs-beard/](http://darussophile.com/2011/12/measuring-churovs-beard/).
+
+In this exercise, we use the rules of probability to detect election fraud by examining voting patterns in the 2011 Russian State Duma election. (The State Duma is the federal legislature of Russia.) This exercise is based on: 
+
+Arturas Rozenas (2016). *Inferring Election Fraud from Distributions of Vote-Proportions.* Working Paper. 
+
+The ruling political party, United Russia, won this election, but faced many accusations of election fraud, which the Russian government denied.  Some protesters highlighted irregular patterns of voting as evidence of election fraud, as shown in the Figure. In particular, protesters pointed out the relatively high frequency of common fractions such as $1/4$, $1/3$, and $1/2$ in the official vote shares.
+
+We use official election results, contained in the `russia2011` data frame in 'fraud.RData' to investigate whether there is any evidence for election fraud.  This file can be loaded using the `load` function.  
+
+In addition to `russia2011`, the file contains election results from the 2003 Russian Duma election `russia2003`, the 2012 Russian presidential election `russia2012`, and the 2011 Canadian election `canada2011` as separate data frames.  Each of these data sets has the same variables, described in the table below.
+
+
+-------------------------------------------------------------------
+ Name                Description
+ ------------------- ----------------------------------------------
+ `N`                 Total number of voters in a precinct 
+ 
+ `turnout`           Total number of turnout in a precinct
+ 
+ `votes`             Total number of votes for winner in a precinct
+-------------------------------------------------------------------
+ 
+## Question 1
+ 
+To analyze the 2011 Russian election results, first compute United Russia's vote share as a proportion of the voters who turned out.  Identify the 10 most frequently occurring fractions for the vote share.  Create a histogram that sets the number of bins to the number of unique fractions, with one bar created for each uniquely observed fraction, to differentiate between similar fractions like $1/2$ and $51/100$. This can be done by using the `breaks` argument in the `hist` function.  What does this histogram look like at fractions with low numerators and denominators such as $1/2$ and $2/3$?
+
+```{r}
+load("data/fraud.RData")
+russia2011$rvote <- russia2011$votes / russia2011$turnout # vote share 
+sort(table(russia2011$rvote), decreasing = TRUE)[1:10]
+```
+
+A: Fractions with small numerators and denominators such as 1/2, 1/3, and 2/3 have high frequencies. Note that 0.4285714 and 0.5714286 represent 3/7 and 4/7 while 0.5454545 represents 6/11. The histogram is shown below.
+
+```{r}
+par(cex = 1.5)
+hist(russia2011$rvote, freq = FALSE, ylim = c(0, 200),
+     breaks = length(unique(russia2011$rvote)),
+     xlab = "United Russia's vote share", main = "")
+```
+
+## Question 2
+
+The mere existence of high frequencies at low fractions may not imply election fraud.  Indeed, more numbers are divisible by smaller integers like 2, 3, and 4 than by larger integers like 22, 23, and 24.  To investigate the possibility that the low fractions arose by chance, we will compare values that have been simulated using a probability model that assumes there is no fraud. You will find these simulated values in ```voteshare```, which is a large matrix in saved in the data environment. 
+
+What are the 10 most frequent vote share values in the simulated data? Hint: you will need to sort the matrix as a table and then look at rows 1:10.   
+
+Create a histogram similar to the one in the previous question.To compare this plot to the one you created in question 1, use the same number of breaks. Briefly comment on the results. Does the pattern look similar to the one found in the previous question? Does this mean the high frequency of particular fractions constitutes evidence of election fraud?
+
+```{r}
+#this is the code to create the simulated data. 
+sims <- 100
+n <- nrow(russia2011)
+
+## observed turnout rate and vote share
+russia2011$rturn <- russia2011$turnout / russia2011$N
+russia2011$rvote <- russia2011$votes / russia2011$turnout
+
+election <- function(){
+  turnout <- rbinom(n, size = russia2011$N, prob = russia2011$rturn)
+  rbinom(n, size = turnout, prob = russia2011$rvote) / turnout
+}
+# simulate 1000 elections and stack the results
+voteshare <- replicate(sims, election())
+
+```
+
+```{r}
+# simple but slow method of getting 10 most frequent proportions
+#
+# sort(table(voteshare), decreasing = TRUE)[1:10]
+
+# more complex but faster way of getting 10 most frequent proportions
+#
+# sort and count 'runs' of the same vote share (~15s)
+vs.rl <- rle(sort(as.vector(voteshare), decreasing = TRUE, method='quick')) 
+vs.rl.sorted <- vs.rl$values[order(vs.rl$lengths, decreasing = TRUE)] # sort
+vs.rl.sorted[1:10] # most frequent 10 proportions
+
+hist(as.vector(voteshare), breaks = 5000, freq = FALSE, main = "", xlab = "Vote Share")
+```
+
+A: Even when we assume the absence of election fraud, the relative frequency of small fractions such as 1/2, 1/3, and 2/3 is quite high. This pattern is similar to what we found in the observed data of the previous question. This suggests that the high frequency of these fractions alone does not constitute evidence for election fraud.
+
+## Question 3
+
+To judge the Monte Carlo simulation results against the actual results of the 2011 Russian election, we compare the observed fraction of observations within a bin of certain size with its simulated counterpart.  To do this, create histograms showing the distribution of Question 2's four most frequently occurring fractions, i.e., $1/2$, $1/3$, $3/5$, and $2/3$, and compare them with the corresponding fractions' proportion in the actual election (from question 1). Briefly interpret the results. Do the plots indicate any irregularity in election returns? Remember, the simulations are an estimate of what the returns would have looked like if no fraud had occurred. 
+
+I will get you started with an example of how to do this. Take a look at each of the pieces and get a sense of what each thing is doing. Then do the same thing for the rest of the most commonly occurring fractions.  
+
+```{r}
+par(cex = 1.5) 
+hist(apply(voteshare == 1/2, 2, mean), freq = FALSE, xlim = c(0, 0.005), 
+     xlab = "Proportion", main = "Relative frequency of 1/2")
+abline(v = mean(russia2011$rvote == 1/2), col = "red")
+
+hist(apply(voteshare == 1/3, 2, mean), freq = FALSE, xlim = c(0, 0.005),
+     xlab = "Proportion", main = "Relative frequency of 1/3")
+abline(v = mean(russia2011$rvote == 1/3), col = "red")
+
+hist(apply(voteshare == 3/5, 2, mean), freq = FALSE, xlim = c(0, 0.005),
+     xlab = "Proportion", main = "Relative frequency of 3/5")
+abline(v = mean(russia2011$rvote == 3/5), col = "red")
+
+hist(apply(voteshare == 2/3, 2, mean), freq = FALSE, xlim = c(0, 0.005),
+     xlab = "Proportion", main = "Relative frequency of 2/3")
+abline(v = mean(russia2011$rvote == 2/3), col = "red")
+```
+
+A: The observed relative frequency looks normal when compared to the simulated frequency under no election fraud for 1/2, 1/3, and 2/3. However, for 3/5, the observed frequency appears unusually high, suggesting irregularity in election returns.
