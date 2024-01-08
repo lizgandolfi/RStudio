@@ -7,13 +7,12 @@ header-includes:
   - \pagestyle{fancy}
   - \fancypagestyle{plain}{\pagestyle{fancy}}
   - \fancyhead[L]{}
-  - \fancyhead[C]{This material should not be shared beyond those who are enrolled in this class}
 
 ---
 
-## Question 1
+## 1
 
-Load the ```countries2``` data set and get the names of all of the variables included in it. Based just on what you can tell from the variable names, what sorts of variables are in this data set? Identify one variable that looks like it might represent something interesting to study (a potential dependent variable), and then identify another variable that you think might be related to the first variable you chose.
+Load the data set and get the names of all of the variables included. Identify two interesting variables.
 
 ```{r}
 #load data
@@ -37,9 +36,9 @@ We could study infant's mortality as related to the independent variable "health
 summary(countries2$health_exp)
 ```
 
-## Question 2
+## 2
 
-Use the ```dim``` function to tell how many variables and how many countries are in the data set.
+List the number of all the variables.
 
 ```{r}
 #View(countries2)
@@ -48,9 +47,9 @@ dim(countries2)
 
 The numbers reflect the rows and columns. Therefore the data set 'countries2' contains 195 countries and 49 variables.
 
-## Question 3
+## 3
 
-Use the ```Approve21``` data set and create a new object, ```Approve21$net_approve```, which is calculated as the percent in the state who approve of the Biden’s performance MINUS the percent in the state who disapprove of Biden’s performance. Sort the data set by ```Approve21$net_approve``` and list the six highest and lowest states. Say a few words about the types of states in these two lists.
+Create a new object, calculated as the percent in the state who approve of the Biden’s performance MINUS the percent in the state who disapprove of Biden’s performance. Sort the data set by the new variable and list the six highest and lowest states.
 
 ```{r}
 library(readxl)
@@ -76,9 +75,9 @@ tail(Approve21)
 
 The six lowest states are primarily coast states and northern states, which are known to overwhelmingly vote liberal and will have potentially favored President Biden during the elections.
 
-## Question 4
+## 4
 
-Produce a histogram of ```Approve21$net_approve``` and describe what you see. Be sure to provide substantively meaningful labels for the histogram.
+Produce a histogram of a variable and describe what you see.
 
 ```{r}
 #create histogram

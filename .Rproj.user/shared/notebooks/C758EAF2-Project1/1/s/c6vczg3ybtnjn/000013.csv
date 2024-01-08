@@ -1,0 +1,18 @@
+"0","tinytex::install_tinytex()"
+"2","trying URL 'https://yihui.org/tinytex/TinyTeX-1.zip'
+"
+"2","Content type 'application/octet-stream'"
+"2"," length 129306985 bytes (123.3 MB)
+"
+"2","downloaded 123.3 MB
+
+"
+"1","3 File(s) copied
+"
+"1","1 File(s) copied
+"
+"1","Running fc-cache -v -r
+"
+"0","library(LaTex)"
+"2","Error in library(LaTex) : there is no package called ‘LaTex’
+"
