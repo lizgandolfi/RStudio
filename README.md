@@ -5,7 +5,7 @@
  - Variable Manipulation
  - Centrality and Dispersion
  - Probability and Sampling
- - Hypoyhesis Testing with 1 and 2 Means
+ - Hypothesis Testing with 1 and 2 Means
  - Hypothesis Testing 2
  - Real World Example 1
  - Real World Example 2
